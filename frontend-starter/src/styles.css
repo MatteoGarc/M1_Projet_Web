@@ -1,0 +1,77 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #17312a;
+  background: #f3f7f5;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 5vw; color: white; background: #123d32; }
+header small { opacity: 0.7; }
+nav { display: flex; align-items: center; gap: 1rem; }
+nav button { padding: 0.4rem 0.9rem; }
+nav span { opacity: 0.85; }
+a { color: #1d755e; }
+header a { color: white; }
+main { max-width: 1050px; margin: 2rem auto; padding: 0 1rem; }
+.hero { margin-bottom: 1rem; padding: 2rem; color: white; background: linear-gradient(120deg, #123d32, #276c57); border-radius: 20px; }
+.eyebrow { letter-spacing: 0.15em; font-size: 0.75rem; }
+.grid { display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; }
+.card { padding: 1.3rem; background: white; border-radius: 16px; box-shadow: 0 8px 25px #17312a14; }
+.card form, label { display: grid; gap: 0.4rem; }
+label { margin: 0.8rem 0; }
+input { padding: 0.75rem; border: 1px solid #b8cbc5; border-radius: 8px; }
+button { padding: 0.7rem 1rem; color: white; background: #1d755e; border: 0; border-radius: 8px; cursor: pointer; }
+button:disabled { opacity: 0.45; }
+.row, .track, .pager { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.track { padding: 0.8rem 0; border-bottom: 1px solid #e1ebe7; }
+.track small { display: block; color: #61756f; }
+.pager { margin: 1rem 0; }
+audio { width: 100%; }
+.error { color: #a33; }
+
+@media (max-width: 720px) {
+  header, .grid { display: block; }
+  nav { margin-top: 1rem; }
+  .grid .card { margin-bottom: 1rem; }
+}
+
+/* ===================================================================
+ * TP3 — Angular Material (SnackBar, Dialog, ProgressBar)
+ * Le thème prédéfini `azure-blue.css` est chargé dans angular.json ;
+ * on remplace ici sa couleur principale par le vert de l'application.
+ * Ces règles sont GLOBALES car la SnackBar et le Dialog sont affichés dans
+ * un « overlay » ajouté à la fin du <body>, hors des composants : les
+ * styles encapsulés d'un composant ne les atteignent pas.
+ * =================================================================== */
+html {
+  --mat-sys-primary: #1d755e;
+  --mat-sys-primary-container: #e4f1ec;
+  /* Le thème Material prévoit la police Roboto, non chargée ici : sans ces
+     jetons, le texte du dialogue et de la SnackBar passerait en police serif. */
+  --mat-dialog-subhead-font: Inter, system-ui, sans-serif;
+  --mat-dialog-supporting-text-font: Inter, system-ui, sans-serif;
+  --mat-dialog-supporting-text-color: #17312a;
+  --mat-snack-bar-supporting-text-font: Inter, system-ui, sans-serif;
+}
+
+/* La règle globale `button { background: #1d755e }` s'appliquerait aussi au
+   bouton d'action de la SnackBar : on la neutralise dans ce contexte. */
+.mat-mdc-snack-bar-container button {
+  padding: 0.3rem 0.7rem;
+  font-family: inherit;
+  background: transparent;
+}
+
+.snack--success {
+  --mat-snack-bar-container-color: #123d32;
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #b7e2cc;
+}
+
+.snack--error {
+  --mat-snack-bar-container-color: #8a1f1f;
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #ffd7d7;
+}
+

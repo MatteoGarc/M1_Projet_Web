@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content>
+  <p>{{ data.message }}</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <!-- [mat-dialog-close] ferme la boîte en renvoyant la valeur indiquée à afterClosed(). -->
+  <button type="button" class="secondary" [mat-dialog-close]="false" cdkFocusInitial>
+    {{ data.cancelLabel ?? 'Annuler' }}
+  </button>
+  <button type="button" class="danger" [mat-dialog-close]="true">
+    {{ data.confirmLabel }}
+  </button>
+</mat-dialog-actions>

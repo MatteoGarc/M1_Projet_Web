@@ -1,0 +1,60 @@
+:host { display: block; }
+
+h2 { margin-top: 0; }
+.count { font-weight: 400; color: #4d625c; font-size: 0.85em; }
+.hint { display: block; font-weight: 400; color: #4d625c; font-size: 0.8rem; }
+
+.upload-card { align-self: start; }
+.upload-card button[type='submit'] { width: 100%; margin-top: 0.4rem; }
+
+.secondary { color: #1d755e; background: #e4f1ec; }
+
+.message { margin: 0.8rem 0 0; padding: 0.65rem 0.8rem; border-radius: 8px; font-size: 0.9rem; }
+.message--error { color: #8a1f1f; background: #fdecec; border: 1px solid #f3c1c1; }
+.message--success { color: #135c3f; background: #e5f6ee; border: 1px solid #b7e2cc; }
+
+.upload-progress { margin: 0.8rem 0 0; }
+.upload-progress mat-progress-bar { border-radius: 4px; }
+.upload-progress__label { margin: 0.4rem 0 0; font-size: 0.9rem; color: #17312a; }
+/* Angular supprime les espaces entre éléments : l’écart est donné en CSS. */
+.upload-progress__label small { margin-left: 0.35em; color: #4d625c; }
+
+.link { padding: 0 0.3rem; color: inherit; text-decoration: underline; background: none; }
+
+.loading { display: flex; align-items: center; gap: 0.5rem; color: #4d625c; }
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  border: 2px solid #ffffff66;
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.spinner--dark { border-color: #1d755e33; border-top-color: #1d755e; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.player { margin: 0.5rem 0 1rem; padding: 0.8rem; background: #f1f8f5; border-radius: 12px; }
+.player__now { display: grid; margin: 0 0 0.5rem; }
+.player__now .eyebrow { color: #1d755e; font-size: 0.7rem; }
+
+/* Cards responsives : 1 colonne sur mobile, 2 ou plus dès que la place le permet. */
+.track-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  transition: opacity 0.15s;
+}
+.track-list.is-loading { opacity: 0.5; }
+
+.empty { grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: #4d625c; border: 2px dashed #cfe0d9; border-radius: 12px; }
+.empty p { margin: 0.2rem 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+}

@@ -1,0 +1,55 @@
+<article class="track-card" [class.is-playing]="playing()" [class.is-deleting]="deleting()" [attr.aria-labelledby]="'track-title-' + track().id">
+  <div class="track-card__icon" aria-hidden="true">{{ playing() ? '♫' : '♪' }}</div>
+
+  <div class="track-card__body">
+    <h3 class="track-card__title" [id]="'track-title-' + track().id">{{ track().title }}</h3>
+    <p class="track-card__file" [title]="track().originalName">{{ track().originalName }}</p>
+
+    <dl class="track-card__meta">
+      <div><dt>Format</dt><dd>{{ format() }}</dd></div>
+      <div><dt>Taille</dt><dd>{{ track().size | fileSize }}</dd></div>
+      <div>
+        <dt>Ajout</dt>
+        <dd><time [attr.datetime]="track().createdAt">{{ track().createdAt | date: "dd/MM/yyyy 'à' HH:mm" }}</time></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="track-card__actions">
+    <button
+      type="button"
+      class="track-card__play"
+      (click)="play.emit(track())"
+      [disabled]="loadingAudio() || deleting()"
+      [attr.aria-pressed]="playing()"
+      [attr.aria-label]="(loadingAudio() ? 'Chargement de ' : playing() ? 'En lecture : ' : 'Lire ') + track().title"
+    >
+      @if (loadingAudio()) {
+        <span aria-hidden="true">…</span> Chargement
+      } @else if (playing()) {
+        <span aria-hidden="true">♫</span> En lecture
+      } @else {
+        <span aria-hidden="true">▶</span> Lire
+      }
+    </button>
+
+    <!--
+      TP3 Mission 5 : le bouton ne supprime rien lui-même, il émet `remove`.
+      [disabled] pendant la requête DELETE : un second clic est impossible.
+    -->
+    <button
+      type="button"
+      class="track-card__delete"
+      (click)="remove.emit(track())"
+      [disabled]="deleting()"
+      [attr.aria-busy]="deleting()"
+      [attr.aria-label]="(deleting() ? 'Suppression en cours de ' : 'Supprimer ') + track().title"
+    >
+      @if (deleting()) {
+        <span aria-hidden="true">…</span> Suppression
+      } @else {
+        <span aria-hidden="true">🗑</span> Supprimer
+      }
+    </button>
+  </div>
+</article>

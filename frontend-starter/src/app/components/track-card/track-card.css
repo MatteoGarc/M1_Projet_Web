@@ -1,0 +1,80 @@
+:host { display: block; height: 100%; }
+
+.track-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 0.6rem 0.9rem;
+  height: 100%;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #dbe7e2;
+  border-radius: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.track-card:hover { border-color: #9cc3b6; }
+.track-card:focus-within { box-shadow: 0 0 0 3px #1d755e40; }
+.track-card.is-playing { border-color: #1d755e; background: #f1f8f5; }
+
+.track-card__icon {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  font-size: 1.3rem;
+  color: #fff;
+  background: linear-gradient(135deg, #123d32, #276c57);
+  border-radius: 10px;
+}
+
+.track-card__body { min-width: 0; }
+
+.track-card__title {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.track-card__file {
+  margin: 0.15rem 0 0.5rem;
+  overflow: hidden;
+  font-size: 0.85rem;
+  color: #4d625c;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.track-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.track-card__meta div { display: flex; gap: 0.3rem; }
+.track-card__meta dt { color: #4d625c; }
+.track-card__meta dt::after { content: ' :'; }
+.track-card__meta dd { margin: 0; font-weight: 600; }
+
+.track-card.is-deleting { opacity: 0.6; }
+
+.track-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 0.5rem;
+}
+
+.track-card__play { min-width: 8rem; }
+
+/* Action destructive : style secondaire rouge, contraste AA sur fond clair. */
+.track-card__delete {
+  color: #a32222;
+  background: #fdecec;
+}
+
+.track-card__play:focus-visible,
+.track-card__delete:focus-visible { outline: 3px solid #123d32; outline-offset: 2px; }

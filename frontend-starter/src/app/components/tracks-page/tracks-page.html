@@ -1,0 +1,155 @@
+<section aria-labelledby="library-title">
+  <div class="hero">
+    <p class="eyebrow">MA BIBLIOTHÈQUE</p>
+    <h1 id="library-title">Backing tracks</h1>
+    <p>Importez, retrouvez et écoutez vos morceaux de travail.</p>
+  </div>
+
+  <div class="grid">
+    <!-- ============ Mission 3 : upload — TP3 Mission 6 : progression ============ -->
+    <article class="card upload-card" aria-labelledby="upload-title">
+      <h2 id="upload-title">Importer</h2>
+
+      <form [formGroup]="uploadForm" (ngSubmit)="upload()" [attr.aria-busy]="uploading()" novalidate>
+        <label>
+          Titre <small class="hint">(facultatif — sinon le nom du fichier)</small>
+          <input formControlName="title" maxlength="120" autocomplete="off" />
+        </label>
+
+        <label>
+          Fichier audio <small class="hint">MP3, WAV, OGG ou M4A — 25 Mo max.</small>
+          <input
+            #fileInput
+            type="file"
+            [accept]="accept"
+            (change)="choose($event)"
+            [disabled]="uploading()"
+            [attr.aria-invalid]="fileError() !== null"
+            aria-describedby="file-feedback"
+          />
+        </label>
+
+        <div id="file-feedback">
+          @if (fileError(); as message) {
+            <p class="message message--error" role="alert">{{ message }}</p>
+          }
+        </div>
+
+        <button type="submit" [disabled]="!canUpload()">
+          @if (uploading()) {
+            <span class="spinner" aria-hidden="true"></span> Envoi en cours…
+          } @else {
+            Envoyer
+          }
+        </button>
+      </form>
+
+      <!--
+        TP3 Mission 6 : un seul Signal `uploadState` (idle | uploading | success | error).
+        - idle      → rien n'est affiché ;
+        - uploading → barre + pourcentage (HORS région aria-live : annoncer
+                      chaque pourcentage serait très bruyant) ;
+        - success / error → message DANS la région aria-live (annoncé une fois).
+      -->
+      @let state = uploadState();
+      @if (state.status === 'uploading') {
+        <div class="upload-progress">
+          <!-- mat-progress-bar porte role="progressbar" et aria-valuenow. -->
+          <mat-progress-bar
+            [mode]="state.progress === null ? 'indeterminate' : 'determinate'"
+            [value]="state.progress ?? 0"
+            aria-label="Progression de l’envoi du fichier"
+          />
+          <p class="upload-progress__label">
+            @if (state.progress === null) {
+              Envoi en cours…
+            } @else if (state.progress < 100) {
+              Envoi : <b>{{ state.progress }} %</b>
+              <small>({{ state.loaded | fileSize }}@if (state.total) { / {{ state.total | fileSize }}})</small>
+            } @else {
+              <!-- 100 % = octets envoyés ; le serveur doit encore écrire le fichier et la métadonnée. -->
+              Fichier transmis, enregistrement par le serveur…
+            }
+          </p>
+        </div>
+      }
+
+      <div aria-live="polite">
+        @if (state.status === 'success') {
+          <p class="message message--success" role="status">
+            « {{ state.track.title }} » a bien été ajoutée à votre bibliothèque.
+          </p>
+        } @else if (state.status === 'error') {
+          <p class="message message--error" role="alert">{{ state.message }}</p>
+        }
+      </div>
+    </article>
+
+    <!-- =================== Mission 2 : bibliothèque paginée =================== -->
+    <article class="card" aria-labelledby="tracks-title">
+      <div class="row">
+        <h2 id="tracks-title">Mes pistes <small class="count">({{ total() }})</small></h2>
+        <button type="button" class="secondary" (click)="load()" [disabled]="loading()">Actualiser</button>
+      </div>
+
+      <!-- Lecteur : morceau en cours + erreur audio -->
+      @if (audioUrl(); as url) {
+        <div class="player" aria-label="Lecteur audio" role="region">
+          <p class="player__now">
+            <span class="eyebrow">EN COURS DE LECTURE</span>
+            <b>{{ currentTrack()?.title }}</b>
+          </p>
+          <audio [src]="url" controls autoplay (error)="onAudioError($event)" (play)="onAudioPlay()">
+            Votre navigateur ne sait pas lire l’élément audio.
+          </audio>
+        </div>
+      }
+      @if (audioError(); as message) {
+        <p class="message message--error" role="alert">{{ message }}</p>
+      }
+
+      @if (error(); as message) {
+        <p class="message message--error" role="alert">
+          {{ message }}
+          <button type="button" class="link" (click)="load()">Réessayer</button>
+        </p>
+      }
+
+      @if (loading()) {
+        <p class="loading" role="status"><span class="spinner spinner--dark" aria-hidden="true"></span> Chargement…</p>
+      }
+
+      <ul class="track-list" [attr.aria-busy]="loading()" [class.is-loading]="loading()">
+        @for (track of tracks(); track track.id) {
+          <li>
+            <app-track-card
+              [track]="track"
+              [playing]="currentTrack()?.id === track.id && audioUrl() !== null"
+              [loadingAudio]="loadingTrackId() === track.id"
+              [deleting]="isDeleting(track.id)"
+              (play)="play($event)"
+              (remove)="confirmRemove($event)"
+            />
+          </li>
+        } @empty {
+          @if (!loading() && !error()) {
+            <li class="empty">
+              <p>Aucune piste pour l’instant.</p>
+              <p><small>Importez un premier fichier audio avec le formulaire.</small></p>
+            </li>
+          }
+        }
+      </ul>
+
+      <nav class="pager" aria-label="Pagination des pistes">
+        <button type="button" (click)="go(page() - 1)" [disabled]="!hasPrevious() || loading()">
+          <span aria-hidden="true">←</span> Précédent
+        </button>
+        <span aria-live="polite">Page {{ page() }} / {{ pages() }}</span>
+        <button type="button" (click)="go(page() + 1)" [disabled]="!hasNext() || loading()">
+          Suivant <span aria-hidden="true">→</span>
+        </button>
+      </nav>
+    </article>
+  </div>
+</section>

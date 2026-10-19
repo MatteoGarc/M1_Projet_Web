@@ -1,0 +1,12 @@
+:host { display: block; }
+
+p { margin: 0; line-height: 1.5; }
+
+mat-dialog-actions { gap: 0.5rem; }
+
+.secondary { color: #1d755e; background: #e4f1ec; }
+
+/* Rouge foncé : contraste AA (≥ 4,5:1) avec le texte blanc. */
+.danger { color: #fff; background: #a32222; }
+
+button:focus-visible { outline: 3px solid #123d32; outline-offset: 2px; }
