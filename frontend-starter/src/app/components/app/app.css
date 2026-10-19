@@ -1,1 +1,4 @@
 :host { display: block; }
+
+/* Keep navigation above the library's fixed decorative background. */
+header { position: relative; z-index: 1; }

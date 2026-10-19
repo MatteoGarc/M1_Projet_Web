@@ -1,4 +1,4 @@
-:host { display: block; }
+:host { display: block; isolation: isolate; }
 
 h2 { margin-top: 0; }
 .count { font-weight: 400; color: #4d625c; font-size: 0.85em; }

@@ -1,0 +1,11 @@
+<div class="backdrop" aria-hidden="true">
+  <canvas #canvas aria-hidden="true" [class.is-visible]="animated()"></canvas>
+</div>
+<div class="animation-controls">
+  <button type="button" [attr.aria-pressed]="animated()" [disabled]="reducedMotion() || !available()" (click)="toggle()">
+    Animations du fond : {{ animated() ? 'activées' : 'désactivées' }}
+  </button>
+  @if (reducedMotion()) {
+    <small>Votre préférence de réduction des animations est active.</small>
+  }
+</div>
