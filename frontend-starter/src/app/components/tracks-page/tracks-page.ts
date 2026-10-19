@@ -16,6 +16,7 @@ import { uploadStateFromEvent } from '../../shared/utils/upload-state';
 import { AUDIO_ACCEPT, validateAudioFile } from '../../shared/validators/audio-file.validator';
 import { ConfirmDialogComponent } from '../confirm-dialog/confirm-dialog';
 import { TrackCardComponent } from '../track-card/track-card';
+import { ShaderBackgroundComponent } from '../shader-background/shader-background';
 
 /**
  * Page « Backing tracks » : bibliothèque paginée côté serveur (Mission 2),
@@ -26,7 +27,7 @@ import { TrackCardComponent } from '../track-card/track-card';
  * par `TrackService`.
  */
 @Component({
-  imports: [ReactiveFormsModule, RouterLink, MatProgressBar, FileSizePipe, TrackCardComponent],
+  imports: [ReactiveFormsModule, RouterLink, MatProgressBar, FileSizePipe, TrackCardComponent, ShaderBackgroundComponent],
   templateUrl: './tracks-page.html',
   styleUrl: './tracks-page.css',
 })
