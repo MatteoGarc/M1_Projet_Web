@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBar } from '@angular/material/progress-bar';
+import { RouterLink } from '@angular/router';
 import { Subscription, finalize } from 'rxjs';
 import { ConfirmDialogData } from '../../shared/models/confirm-dialog-data.model';
 import { Track } from '../../shared/models/track.model';
@@ -25,7 +26,7 @@ import { TrackCardComponent } from '../track-card/track-card';
  * par `TrackService`.
  */
 @Component({
-  imports: [ReactiveFormsModule, MatProgressBar, FileSizePipe, TrackCardComponent],
+  imports: [ReactiveFormsModule, RouterLink, MatProgressBar, FileSizePipe, TrackCardComponent],
   templateUrl: './tracks-page.html',
   styleUrl: './tracks-page.css',
 })
