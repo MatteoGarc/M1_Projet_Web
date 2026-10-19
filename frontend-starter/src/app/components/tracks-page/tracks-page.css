@@ -4,7 +4,19 @@ h2 { margin-top: 0; }
 .count { font-weight: 400; color: #4d625c; font-size: 0.85em; }
 .hint { display: block; font-weight: 400; color: #4d625c; font-size: 0.8rem; }
 
-.upload-card { align-self: start; }
+.side { display: grid; align-self: start; gap: 1rem; }
+.record-card .hint { margin: 0 0 0.8rem; }
+.button-link {
+  display: block;
+  padding: 0.7rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  color: #fff;
+  background: #b02a1e;
+  border-radius: 8px;
+}
+.button-link:hover { background: #8f2218; }
+.button-link:focus-visible { outline: 3px solid #123d32; outline-offset: 2px; }
 .upload-card button[type='submit'] { width: 100%; margin-top: 0.4rem; }
 
 .secondary { color: #1d755e; background: #e4f1ec; }
@@ -54,6 +66,10 @@ h2 { margin-top: 0; }
 
 .empty { grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: #4d625c; border: 2px dashed #cfe0d9; border-radius: 12px; }
 .empty p { margin: 0.2rem 0; }
+
+@media (max-width: 720px) {
+  .side { margin-bottom: 1rem; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .spinner { animation: none; }

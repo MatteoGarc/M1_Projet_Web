@@ -1,0 +1,212 @@
+<section aria-labelledby="recorder-title">
+  <div class="hero">
+    <p class="eyebrow">ENREGISTREUR</p>
+    <h1 id="recorder-title">Enregistrer un MP3</h1>
+    <p>Enregistrez plusieurs prises (mélodie, rythme, voix…), ajustez-les, puis sauvegardez le mélange dans votre bibliothèque.</p>
+    <a routerLink="/tracks" class="back"><span aria-hidden="true">←</span> Retour à la bibliothèque</a>
+  </div>
+
+  @if (!supported) {
+    <p class="message message--error" role="alert">
+      Votre navigateur ne permet pas d’enregistrer du son. Utilisez une version récente de Chrome, Edge, Firefox ou Safari
+      (et une adresse en <code>https</code> ou <code>localhost</code>).
+    </p>
+  } @else {
+    <div class="top">
+      <!-- ======================== 1. Entrée audio ======================== -->
+      <article class="card" aria-labelledby="input-title">
+        <h2 id="input-title"><span class="step" aria-hidden="true">1</span> Entrée audio</h2>
+
+        @if (!stream() && inputs().length === 0) {
+          <p class="hint">Le navigateur va vous demander l’autorisation d’utiliser le micro.</p>
+          <button type="button" (click)="enableInput()" [disabled]="opening()">
+            {{ opening() ? 'Ouverture…' : 'Autoriser le micro' }}
+          </button>
+        } @else {
+          <label>
+            Source
+            <select (change)="changeInput($event)" [disabled]="recording() || opening()">
+              @for (input of inputs(); track input.deviceId) {
+                <option [value]="input.deviceId" [selected]="input.deviceId === selectedInput()">{{ input.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="inline">
+            <input type="checkbox" [checked]="voiceProcessing()" (change)="toggleVoiceProcessing($event)" [disabled]="recording() || opening()" />
+            Réduction de bruit et d’écho <small class="hint">(pour la voix ; à éviter pour un instrument)</small>
+          </label>
+
+          @if (stream()) {
+            <div class="meter-label" id="meter-label">
+              Niveau d’entrée
+              @if (clipping()) {
+                <b class="clip" role="status">Saturation ! Baissez le volume d’entrée</b>
+              }
+            </div>
+            <div class="meter" role="meter" aria-labelledby="meter-label" aria-valuemin="0" aria-valuemax="100"
+                 [attr.aria-valuenow]="(level() * 100).toFixed(0)">
+              <div class="meter__fill" [class.is-hot]="level() > 0.8" [class.is-clipping]="clipping()" [style.width.%]="level() * 100"></div>
+            </div>
+          } @else if (!opening()) {
+            <button type="button" class="secondary" (click)="enableInput()">Réactiver le micro</button>
+          }
+        }
+
+        @if (inputError(); as message) {
+          <p class="message message--error" role="alert">{{ message }}</p>
+        }
+      </article>
+
+      <!-- ======================== 2. Enregistrement ======================== -->
+      <article class="card" aria-labelledby="rec-title">
+        <h2 id="rec-title"><span class="step" aria-hidden="true">2</span> Enregistrer une prise</h2>
+
+        @let status = recorder.status();
+        <div class="rec-display" [class.is-recording]="status === 'recording'" [class.is-paused]="status === 'paused'">
+          <span class="rec-display__dot" aria-hidden="true"></span>
+          <span class="rec-display__time">{{ format(recorder.elapsed()) }}</span>
+          <span class="rec-display__status" aria-live="polite">
+            @switch (status) {
+              @case ('recording') { Enregistrement… }
+              @case ('paused') { En pause }
+              @default { {{ processing() ? 'Préparation de la prise…' : 'Prêt' }} }
+            }
+          </span>
+        </div>
+
+        <div class="rec-buttons">
+          @if (status === 'inactive') {
+            <button type="button" class="rec" (click)="startRecording()" [disabled]="!stream() || busy()">
+              <span aria-hidden="true">●</span> Enregistrer
+            </button>
+          } @else {
+            @if (status === 'recording') {
+              <button type="button" class="secondary" (click)="pauseRecording()"><span aria-hidden="true">⏸</span> Pause</button>
+            } @else {
+              <button type="button" class="secondary" (click)="resumeRecording()"><span aria-hidden="true">▶</span> Reprendre</button>
+            }
+            <button type="button" (click)="stopRecording()"><span aria-hidden="true">■</span> Arrêter</button>
+          }
+        </div>
+
+        @if (!stream()) {
+          <p class="hint">Autorisez d’abord une entrée audio (étape 1).</p>
+        }
+
+        <label class="inline">
+          <input type="checkbox" [checked]="monitor()" (change)="toggleMonitor($event)" [disabled]="recording() || takes().length === 0" />
+          Écouter les autres prises pendant l’enregistrement
+        </label>
+        <p class="hint">Casque conseillé : sinon le micro réenregistre les autres prises.</p>
+
+        @if (recordError(); as message) {
+          <p class="message message--error" role="alert">{{ message }}</p>
+        }
+      </article>
+    </div>
+
+    <!-- ============================ 3. Prises ============================ -->
+    <article class="card" aria-labelledby="takes-title">
+      <div class="row">
+        <h2 id="takes-title"><span class="step" aria-hidden="true">3</span> Prises <small class="count">({{ takes().length }})</small></h2>
+      </div>
+
+      @if (takes().length > 0) {
+        <div class="transport" role="group" aria-label="Lecture du mélange">
+          <button type="button" (click)="togglePlay()" [disabled]="busy() || !hasAudible()" [attr.aria-pressed]="player.playing()">
+            @if (player.playing()) {
+              <span aria-hidden="true">⏸</span> Pause
+            } @else {
+              <span aria-hidden="true">▶</span> Écouter le mélange
+            }
+          </button>
+          <button type="button" class="secondary" (click)="player.stop()" [disabled]="busy()">
+            <span aria-hidden="true">■</span> Stop
+          </button>
+          <label class="transport__seek">
+            <span class="visually-hidden">Position de lecture</span>
+            <input type="range" min="0" [max]="duration()" step="0.01" [value]="player.position()" (input)="seek($event)"
+                   [disabled]="busy() || !hasAudible()" [attr.aria-valuetext]="format(player.position())" />
+          </label>
+          <span class="transport__time">{{ format(player.position()) }} / {{ format(duration()) }}</span>
+        </div>
+        <p class="hint">Les réglages s’appliquent en direct pendant l’écoute.</p>
+      }
+
+      <ul class="takes">
+        @for (take of takes(); track take.id; let i = $index) {
+          <li>
+            <app-take-editor
+              [take]="take"
+              [color]="takeColor(i)"
+              [disabled]="busy()"
+              (changed)="updateTake(take.id, $event)"
+              (removed)="removeTake(take)"
+            />
+          </li>
+        } @empty {
+          <li class="empty">
+            <p>Aucune prise pour l’instant.</p>
+            <p><small>Enregistrez une première prise : elle apparaîtra ici pour être coupée, bouclée ou modifiée.</small></p>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <!-- =========================== 4. Sauvegarde =========================== -->
+    <article class="card save" aria-labelledby="save-title">
+      <h2 id="save-title"><span class="step" aria-hidden="true">4</span> Sauvegarder</h2>
+
+      <form [formGroup]="saveForm" (ngSubmit)="save()" [attr.aria-busy]="saving()" novalidate>
+        <label>
+          Titre <small class="hint">(facultatif — sinon « Enregistrement du … »)</small>
+          <input formControlName="title" maxlength="120" autocomplete="off" />
+        </label>
+
+        <p class="hint">
+          MP3 de {{ format(duration()) }} — environ {{ estimatedSize() | fileSize }}
+          @if (tooBig()) {
+            <b class="danger-text">: trop long, la limite est de 25 Mo.</b>
+          }
+        </p>
+
+        <button type="submit" [disabled]="busy() || !hasAudible() || tooBig()">
+          @if (saving()) {
+            <span class="spinner" aria-hidden="true"></span> Sauvegarde…
+          } @else {
+            Sauvegarder dans ma bibliothèque
+          }
+        </button>
+      </form>
+
+      @let saveStatus = saveState();
+      @switch (saveStatus.status) {
+        @case ('rendering') {
+          <div class="progress">
+            <mat-progress-bar mode="indeterminate" aria-label="Mélange des prises" />
+            <p>Mélange des prises et application des effets…</p>
+          </div>
+        }
+        @case ('encoding') {
+          <div class="progress">
+            <mat-progress-bar mode="determinate" [value]="saveStatus.progress" aria-label="Conversion en MP3" />
+            <p>Conversion en MP3 : <b>{{ saveStatus.progress }} %</b></p>
+          </div>
+        }
+        @case ('uploading') {
+          <div class="progress">
+            <mat-progress-bar [mode]="saveStatus.progress === null ? 'indeterminate' : 'determinate'" [value]="saveStatus.progress ?? 0"
+                              aria-label="Envoi au serveur" />
+            <p>Envoi : <b>{{ saveStatus.progress ?? '…' }} %</b></p>
+          </div>
+        }
+      }
+      <div aria-live="polite">
+        @if (saveStatus.status === 'error') {
+          <p class="message message--error" role="alert">{{ saveStatus.message }}</p>
+        }
+      </div>
+    </article>
+  }
+</section>
