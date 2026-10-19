@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpEventType, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { provideRouter } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Page } from '../../shared/models/page.model';
@@ -65,6 +66,8 @@ describe('TracksPageComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        // Le lien « Ouvrir l'enregistreur » (routerLink) a besoin du Router.
+        provideRouter([]),
         { provide: MatDialog, useValue: dialog },
         { provide: NotificationService, useValue: notifications },
       ],

@@ -1,0 +1,114 @@
+@let t = take();
+<article class="take" [class.is-muted]="t.muted" [style.--take-color]="color()" [attr.aria-label]="'Prise : ' + t.name">
+  <div class="take__head">
+    <span class="take__dot" aria-hidden="true"></span>
+    <label class="take__name">
+      <span class="visually-hidden">Nom de la prise</span>
+      <input type="text" [value]="t.name" maxlength="60" (change)="rename($event)" [disabled]="disabled()" />
+    </label>
+    <span class="take__time" title="Durée jouée dans le morceau">{{ format(played()) }}</span>
+    <button
+      type="button"
+      class="take__mute"
+      (click)="toggleMute()"
+      [attr.aria-pressed]="t.muted"
+      [disabled]="disabled()"
+    >
+      {{ t.muted ? 'Muette' : 'Audible' }}
+    </button>
+    <button type="button" class="take__delete" (click)="removed.emit()" [disabled]="disabled()" [attr.aria-label]="'Supprimer la prise ' + t.name">
+      Supprimer
+    </button>
+  </div>
+
+  <app-waveform [buffer]="t.buffer" [trimStart]="t.trimStart" [trimEnd]="t.trimEnd" [color]="color()" [label]="'Forme d’onde de ' + t.name" />
+
+  <fieldset class="take__group" [disabled]="disabled()">
+    <legend>Couper <small>(garder {{ format(kept()) }} sur {{ format(duration()) }})</small></legend>
+    <div class="take__trim">
+      <label>
+        Début : {{ format(t.trimStart) }}
+        <input type="range" min="0" [max]="duration()" step="0.01" [value]="t.trimStart" (input)="trim('start', $event)"
+               [attr.aria-valuetext]="format(t.trimStart)" />
+      </label>
+      <label>
+        Fin : {{ format(t.trimEnd) }}
+        <input type="range" min="0" [max]="duration()" step="0.01" [value]="t.trimEnd" (input)="trim('end', $event)"
+               [attr.aria-valuetext]="format(t.trimEnd)" />
+      </label>
+    </div>
+    <button type="button" class="link" (click)="resetTrim()">Tout garder</button>
+  </fieldset>
+
+  <div class="take__row">
+    <fieldset class="take__group" [disabled]="disabled()">
+      <legend>Boucle</legend>
+      <label class="inline">
+        <input type="checkbox" [checked]="t.loop" (change)="toggleLoop($event)" />
+        Répéter le passage
+      </label>
+      @if (t.loop) {
+        <label class="inline">
+          <input type="number" class="small" min="2" max="64" step="1" [value]="t.repeats" (change)="setRepeats($event)" />
+          fois
+        </label>
+      }
+    </fieldset>
+
+    <fieldset class="take__group" [disabled]="disabled()">
+      <legend>Placement et volume</legend>
+      <label class="inline">
+        Départ à
+        <input type="number" class="small" min="0" max="600" step="0.05" [value]="t.offset" (change)="setOffset($event)" />
+        s
+      </label>
+      <label>
+        Volume : {{ (t.volume * 100).toFixed(0) }} %
+        <input type="range" min="0" max="150" step="1" [value]="t.volume * 100" (input)="setVolume($event)"
+               [attr.aria-valuetext]="(t.volume * 100).toFixed(0) + ' %'" />
+      </label>
+    </fieldset>
+  </div>
+
+  <details class="take__effects">
+    <summary>Effets</summary>
+    <fieldset class="take__effects-grid" [disabled]="disabled()">
+      <legend class="visually-hidden">Effets de la prise</legend>
+      <label>
+        Filtre
+        <select (change)="setFilter($event)">
+          @for (f of filters; track f.value) {
+            <option [value]="f.value" [selected]="t.effects.filter === f.value">{{ f.label }}</option>
+          }
+        </select>
+      </label>
+      @if (t.effects.filter !== 'none') {
+        <label>
+          Fréquence : {{ t.effects.filterFrequency }} Hz
+          <input type="range" min="100" max="8000" step="50" [value]="t.effects.filterFrequency"
+                 (input)="setEffect('filterFrequency', $event)" />
+        </label>
+      }
+      <label>
+        Écho : {{ (t.effects.echo * 100).toFixed(0) }} %
+        <input type="range" min="0" max="100" step="1" [value]="t.effects.echo * 100" (input)="setEffect('echo', $event, 100)" />
+      </label>
+      @if (t.effects.echo > 0) {
+        <label>
+          Délai de l’écho : {{ (t.effects.echoTime * 1000).toFixed(0) }} ms
+          <input type="range" min="50" max="1000" step="10" [value]="t.effects.echoTime * 1000"
+                 (input)="setEffect('echoTime', $event, 1000)" />
+        </label>
+      }
+      <label>
+        Réverbération : {{ (t.effects.reverb * 100).toFixed(0) }} %
+        <input type="range" min="0" max="100" step="1" [value]="t.effects.reverb * 100" (input)="setEffect('reverb', $event, 100)" />
+      </label>
+      <label>
+        Distorsion : {{ (t.effects.distortion * 100).toFixed(0) }} %
+        <input type="range" min="0" max="100" step="1" [value]="t.effects.distortion * 100"
+               (input)="setEffect('distortion', $event, 100)" />
+      </label>
+    </fieldset>
+  </details>
+</article>
