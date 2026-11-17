@@ -269,4 +269,162 @@ describe('TracksPageComponent', () => {
     expect(component.fileError()).toContain('Format non accepté');
     expect(component.uploadState()).toEqual({ status: 'idle' });
   });
+  // -------------------------------------------------------------------
+  // Mission 2 — chargement, état vide et pagination serveur
+  // -------------------------------------------------------------------
+  const pageN = (n: number, items: Track[], total: number): Page<Track> => ({
+    items,
+    page: n,
+    limit: 5,
+    total,
+    pages: Math.max(1, Math.ceil(total / 5)),
+  });
+  const expectPage = (n: number): TestRequest =>
+    http.expectOne((r) => r.url === '/api/tracks' && r.method === 'GET' && r.params.get('page') === String(n));
+  const button = (text: string) =>
+    [...el().querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent?.includes(text)) as HTMLButtonElement;
+
+  it('affiche « Chargement… » pendant la requête et désactive « Actualiser »', () => {
+    fixture.detectChanges();
+    expect(el().querySelector('.loading')?.textContent).toContain('Chargement…');
+    expect(button('Actualiser').disabled).toBe(true);
+    expect(el().querySelector('.track-list')?.getAttribute('aria-busy')).toBe('true');
+    expectList().flush(page([]));
+  });
+
+  it('état vide : message d’invitation à importer', async () => {
+    await displayTracks([]);
+    expect(el().querySelector('.empty')?.textContent).toContain('Aucune piste pour l’instant.');
+    expect(el().querySelector('#tracks-title')?.textContent).toContain('(0)');
+  });
+
+  it('pagination : « Suivant » demande la page 2 au serveur, « Précédent » est désactivé en page 1', async () => {
+    expectList().flush(pageN(1, tracks, 7));
+    fixture.detectChanges();
+    expect(el().querySelector('.pager')?.textContent).toContain('Page 1 / 2');
+    expect(button('Précédent').disabled).toBe(true);
+
+    button('Suivant').click();
+    expectPage(2).flush(pageN(2, [{ ...tracks[0], id: 't6', title: 'Rock en Ré' }], 7));
+    fixture.detectChanges();
+
+    expect(el().querySelector('.pager')?.textContent).toContain('Page 2 / 2');
+    expect(button('Suivant').disabled).toBe(true);
+    expect(el().querySelectorAll('app-track-card')).toHaveLength(1);
+    expect(el().textContent).toContain('Rock en Ré');
+  });
+
+  it('page devenue vide (pistes supprimées ailleurs) : redemande la dernière page existante', async () => {
+    expectList().flush(pageN(1, tracks, 7));
+    component.go(2);
+    expectPage(2).flush({ items: [], page: 2, limit: 5, total: 3, pages: 1 });
+
+    expectPage(1).flush(pageN(1, tracks, 3));
+    expect(component.page()).toBe(1);
+    expect(component.tracks()).toEqual(tracks);
+  });
+
+  it('« Réessayer » après une erreur relance le chargement', async () => {
+    expectList().flush({ message: 'Base indisponible' }, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    button('Réessayer').click();
+    expectList().flush(page(tracks));
+    fixture.detectChanges();
+    expect(el().querySelectorAll('app-track-card')).toHaveLength(2);
+    expect(el().querySelector('[role="alert"]')).toBeNull();
+  });
+
+  // -------------------------------------------------------------------
+  // Mission 3 — lecture audio authentifiée (Blob)
+  // -------------------------------------------------------------------
+  describe('lecture audio', () => {
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    const revokeObjectURL = vi.fn();
+
+    beforeEach(() => {
+      // jsdom n'implémente pas les ObjectURL.
+      createObjectURL.mockClear();
+      revokeObjectURL.mockClear();
+      Object.assign(URL, { createObjectURL, revokeObjectURL });
+    });
+
+    it('télécharge le Blob puis l’affecte au lecteur', async () => {
+      await displayTracks();
+      el().querySelector<HTMLButtonElement>('.track-card__play')?.click();
+      fixture.detectChanges();
+      expect(el().querySelector('.track-card__play')?.textContent).toContain('Chargement');
+
+      const req = http.expectOne('/api/tracks/t1/audio');
+      expect(req.request.responseType).toBe('blob');
+      req.flush(new Blob(['ID3'], { type: 'audio/mpeg' }));
+      fixture.detectChanges();
+
+      expect(el().querySelector('audio')?.getAttribute('src')).toBe('blob:fake-url');
+      expect(el().querySelector('.player__now')?.textContent).toContain('Blues en La');
+      expect(el().querySelector('.track-card__play')?.getAttribute('aria-pressed')).toBe('true');
+    });
+
+    it('changer de piste révoque l’ancienne URL (pas de fuite mémoire)', async () => {
+      await displayTracks();
+      component.play(tracks[0]);
+      http.expectOne('/api/tracks/t1/audio').flush(new Blob(['a']));
+      component.play(tracks[1]);
+      http.expectOne('/api/tracks/t2/audio').flush(new Blob(['b']));
+
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
+      expect(component.currentTrack()?.id).toBe('t2');
+    });
+
+    it('erreur de lecture : message du serveur affiché', async () => {
+      await displayTracks();
+      component.play(tracks[1]);
+      // Requête `responseType: 'blob'` : le corps d'ERREUR arrive lui aussi en Blob.
+      // (jsdom n'implémente pas `Blob.text()`, on l'ajoute comme dans un navigateur.)
+      const json = JSON.stringify({ message: 'Piste inconnue' });
+      const body = Object.assign(new Blob([json], { type: 'application/json' }), { text: () => Promise.resolve(json) });
+      http.expectOne('/api/tracks/t2/audio').flush(body, { status: 404, statusText: 'Not Found' });
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(el().querySelector('[role="alert"]')?.textContent).toContain('Piste inconnue (HTTP 404)');
+      expect(el().querySelector('audio')).toBeNull();
+    });
+
+    it('supprimer la piste en cours de lecture arrête le lecteur', async () => {
+      await displayTracks();
+      component.play(tracks[0]);
+      http.expectOne('/api/tracks/t1/audio').flush(new Blob(['a']));
+
+      component.remove(tracks[0]);
+      http.expectOne('/api/tracks/t1').flush(null, { status: 204, statusText: 'No Content' });
+      expectList().flush(page([tracks[1]]));
+      fixture.detectChanges();
+
+      expect(component.currentTrack()).toBeNull();
+      expect(el().querySelector('audio')).toBeNull();
+    });
+
+    it('quitter la page révoque l’URL du lecteur', async () => {
+      await displayTracks();
+      component.play(tracks[0]);
+      http.expectOne('/api/tracks/t1/audio').flush(new Blob(['a']));
+
+      fixture.destroy();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
+    });
+  });
+
+  it('upload : le titre vide est remplacé par le nom du fichier', async () => {
+    await displayTracks();
+    selectFile(new File([new Uint8Array(10)], 'impro.ogg', { type: 'audio/ogg' }));
+    component.upload();
+
+    const req = http.expectOne((r) => r.method === 'POST');
+    expect((req.request.body as FormData).get('title')).toBe('impro.ogg');
+    expect((req.request.body as FormData).get('audio')).toBeInstanceOf(File);
+    req.flush(null, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+  });
 });

@@ -1,0 +1,14 @@
+{
+  "name": "gpc-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tests de bout en bout (Playwright). À lancer avec : node e2e/run-e2e.mjs (voir e2e/README.md).",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "@types/node": "24.19.2",
+    "mongodb-memory-server-core": "11.3.0"
+  }
+}
